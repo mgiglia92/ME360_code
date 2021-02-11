@@ -61,7 +61,7 @@ void DAQ_in()
     //Read analog ports
     ser.mic1[daq_in_index] = adc->adc0->analogRead(A0);
     ser.mic2[daq_in_index] = adc->adc0->analogRead(A1);
-    ser.temp = adc->adc0->analogRead(A2);
+    ser.temp = adc->adc0->analogRead(A3);
     //print debug
 //    Serial.println(ser.mic1[daq_in_index]);
     //increment index

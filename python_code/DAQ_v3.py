@@ -10,6 +10,8 @@ import os
 from openpyxl import Workbook
 import datetime
 
+#COMMENT
+
 # Modules for GUI
 from pyqtgraph import PlotWidget
 import pyqtgraph as pg
@@ -41,8 +43,8 @@ class Window(QMainWindow):
         self.currentItemsSB = [] # Used to store variables to be displayed in status bar at the bottom right
         self.verbose = True # Initialization. Used in the thread generated in application
 
-        self.fs = 1000;
-        self.N = 1000;
+        self.fs = 20000;
+        self.N = 20000;
         self.dt = 1.0/self.fs
         self.sample_time = self.N*self.dt
         self.data = []
@@ -101,7 +103,7 @@ class Window(QMainWindow):
         self._led.value = True
         self._led.setMinimumSize(QSize(15, 15))
         self._led.setMaximumSize(QSize(15, 15))     
-        self.statusLabel = QLabel("Arduino Status:")
+        self.statusLabel = QLabel("Teensy Status:")
         self.statusLabel.setFont(QFont("Roboto", 12)) 
 
         self.statusBar().addWidget(self.statusLabel)
@@ -110,10 +112,10 @@ class Window(QMainWindow):
         
     def initalConnections(self):
         """
-        4 Main Buttons (for now)
+        6 Main Buttons (for now)
         """
         self.ui.serialOpenButton.clicked.connect(self.serialOpenPushed)  
-        #self.ui.serialCloseButton.clicked.connect(self.serialClosePushed)
+        self.ui.settingsButton.clicked.connect(self.settingsPushed)
         self.ui.recordbutton.clicked.connect(self.recordbuttonPushed)        
         self.ui.sendbutton.clicked.connect(self.sendbuttonPushed)
         self.ui.plotbutton.clicked.connect(self.plotbuttonPushed)
@@ -209,15 +211,32 @@ class Window(QMainWindow):
         plt.show()
         
     def savebuttonPushed(self):
-        print('Saving...')
+        print('Saving...',end='',flush=True)
+        self.now = datetime.datetime.now()
         for row in self.data.to_numpy():
             self.writerow(self.dl,row)
-        self.result_file.save(directory+'data\\Experiment Data '+ self.now.strftime("%Y-%m-%d %H-%M") +'.xlsx')
-         
+        self.result_file.save(directory+'\\data\\Experiment Data '+ self.now.strftime("%Y-%m-%d %H-%M") +'.xlsx')
+        print('Done.')
+        
     def writerow(self,ws,output=[]):
           for dd, data in enumerate(output):
               ws.cell(row = self.nrow,column = dd+1).value = data
           self.nrow = self.nrow+1
+          
+    def settingsPushed(self):
+        self.fs = int(input('Specify Sampling Rate (fs): '));
+        self.N = int(input('Specify Number of Samples (N): '));
+        
+        self.dt = 1.0/self.fs;
+        self.sample_time = self.N*self.dt
+
+        write_string = f"S0,N{self.N},%".encode('utf-8')
+        self.ser.write(write_string)
+    
+        write_string = f"S1,T{self.fs},%".encode('utf-8')
+        self.ser.write(write_string)
+        
+        print ('Settings saved.')
 
 def main():
     app = QApplication(sys.argv)

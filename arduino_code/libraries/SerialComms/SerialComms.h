@@ -25,6 +25,7 @@ public:
     //--------------------------
     //Local variables to hold data from serial stream
     double dt; //time between samples
+    double fs;
     double N; //Number of samples for recording
     int record_delay;
     bool delay_complete;

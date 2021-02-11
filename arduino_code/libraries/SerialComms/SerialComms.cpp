@@ -8,7 +8,7 @@ SerialComms::SerialComms(){
     N = 1000; //Default num samples to 1000
 
     dt = 0.001; //time between samples (in seconds)
-    arr_length=1000; //Maximum length of the mic data array
+    arr_length=50000; //Maximum length of the mic data array
     daq_out_index=0;    //Index showing the last position of data that has been sent
     mic1 = new unsigned int[arr_length];
     mic2 = new unsigned int[arr_length];
@@ -125,7 +125,7 @@ void SerialComms::send_data()
 
     Serial.print('B'); Serial.print(mic2[daq_out_index]); Serial.print(',');
     
-    Serial.print('C'); Serial.print(fs); Serial.print(',');
+    Serial.print('C'); Serial.print(temp); Serial.print(',');
 
     
     write_data = 0; // Reset write data flag

@@ -1,4 +1,5 @@
 import serial
+import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -9,6 +10,7 @@ from time import sleep
 import os
 from openpyxl import Workbook
 import datetime
+import soundfile as sf
 
 #COMMENT
 
@@ -16,7 +18,7 @@ import datetime
 from pyqtgraph import PlotWidget
 import pyqtgraph as pg
 import qdarkstyle #has some issues on Apple devices and high dpi monitors
-from main_ui import Ui_MainWindow
+from main_ui import Ui_MainWindow, Ui_Dialog
 from QLed import QLed
 from PyQt5.QtGui import QDoubleValidator, QKeySequence, QPixmap, QRegExpValidator, QIcon, QFont, QFontDatabase
 from PyQt5.QtWidgets import (QApplication, QPushButton, QWidget, QComboBox, 
@@ -43,8 +45,8 @@ class Window(QMainWindow):
         self.currentItemsSB = [] # Used to store variables to be displayed in status bar at the bottom right
         self.verbose = True # Initialization. Used in the thread generated in application
 
-        self.fs = 20000;
-        self.N = 20000;
+        self.fs = 10000;
+        self.N = 10000;
         self.dt = 1.0/self.fs
         self.sample_time = self.N*self.dt
         self.data = []
@@ -68,7 +70,10 @@ class Window(QMainWindow):
         # # self.currentValueSB(self.course)
         
         # self.course = "Sound"
-        self.serial_values = {'COM':'COM3','Baud Rate':'1000000','Timeout':0.1,'Data Window':150,'Sampling Rate':0.00002,'Sample Time':1}
+        self.list_ports()
+        self.COM = str(self.com_ports[0])
+        self.ui.com_port.addItems(self.com_ports)
+        self.ui.com_port.setCurrentIndex(self.com_ports.index(self.COM))
         
         atexit.register(self.closeSerial)
         
@@ -77,7 +82,7 @@ class Window(QMainWindow):
         self.result_file = Workbook()
         self.dl = self.result_file.worksheets[0]
         self.writerow(self.dl,['Data Logged From Teensy '+ self.now.strftime("%Y-%m-%d %H-%M")])
-        self.writerow(self.dl,['Time (s)','A0', 'A1', 'Temperature'])
+        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A2'])
         
     def getLogo(self):
         script_dir = os.path.dirname(__file__)
@@ -124,7 +129,8 @@ class Window(QMainWindow):
         # self.ui.settings.clicked.connect(self.settingsMenu)
         
     def serialOpenPushed(self):
-        self.ser = serial.Serial(port=self.serial_values["COM"])
+        self.COM = str(self.ui.com_port.currentText())
+        self.ser = serial.Serial(port=self.COM)
         sleep(2)
         self.ser.flush()
         print("Serial opened successfully!")
@@ -207,7 +213,7 @@ class Window(QMainWindow):
         
         plt.plot(time, A)
         plt.plot(time,B)
-        plt.ylim((0,2**12-1))
+        # plt.ylim((0,2**12-1))
         plt.show()
         
     def savebuttonPushed(self):
@@ -215,7 +221,7 @@ class Window(QMainWindow):
         self.now = datetime.datetime.now()
         for row in self.data.to_numpy():
             self.writerow(self.dl,row)
-        self.result_file.save(directory+'\\data\\Experiment Data '+ self.now.strftime("%Y-%m-%d %H-%M") +'.xlsx')
+        self.result_file.save(directory+'\\data\\Experiment Data '+ self.now.strftime("%Y-%m-%d %H-%M") +'.xlsx') 
         print('Done.')
         
     def writerow(self,ws,output=[]):
@@ -224,19 +230,83 @@ class Window(QMainWindow):
           self.nrow = self.nrow+1
           
     def settingsPushed(self):
-        self.fs = int(input('Specify Sampling Rate (fs): '));
-        self.N = int(input('Specify Number of Samples (N): '));
+        self.settingsDialog = QDialog()
+        self.settingsDialog.setStyleSheet(qdarkstyle.load_stylesheet())
+        self.settingsDialog.setWindowTitle("Settings")
         
-        self.dt = 1.0/self.fs;
-        self.sample_time = self.N*self.dt
+        layout = QVBoxLayout(self.settingsDialog)
+        
+        # com_widget = QComboBox(self.settingsDialog)
+        # self.list_ports()
+        # com_widget.addItems(self.com_ports)
+        # com_widget.setCurrentIndex(self.com_ports.index(self.COM))
+        # layout.addWidget(com_widget)
+        
+        fs_layout = QHBoxLayout()
+        fs_label = QLabel()
+        fs_label.setText("Sampling Rate (fs)")
+        fs_widget = QLineEdit(self.settingsDialog)
+        fs_widget.setText(str(self.fs))
+        fs_layout.addWidget(fs_label)
+        fs_layout.addWidget(fs_widget)
+        layout.addLayout(fs_layout)
+        
+        N_layout = QHBoxLayout()
+        N_label = QLabel()
+        N_label.setText("Number of Samples (N)")
+        N_widget = QLineEdit(self.settingsDialog)
+        N_widget.setText(str(self.N))
+        N_layout.addWidget(N_label)
+        N_layout.addWidget(N_widget)
+        layout.addLayout(N_layout)
+        
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Save
+                             | QDialogButtonBox.Cancel)
+        buttonBox.accepted.connect(self.settingsDialog.accept)
+        buttonBox.rejected.connect(self.settingsDialog.reject)
+        layout.addWidget(buttonBox)
+        
+        self.settingsDialog.setLayout(layout)
+        
+        if self.settingsDialog.exec_() == QDialog.Accepted:
+            self.fs = int(fs_widget.text())
+            self.N = int(N_widget.text())
+            self.dt = 1.0/self.fs
+            self.sample_time = self.N*self.dt          
+            
+            write_string = f"S0,N{self.N},%".encode('utf-8')
+            self.ser.write(write_string)
+        
+            write_string = f"S1,T{self.fs},%".encode('utf-8')
+            self.ser.write(write_string)
+            print('Settings saved.')
+        else:
+            print('Settings NOT saved.')
+        # print(f"Current fs is {self.fs}.")
+        # self.fs = int(input('Specify Sampling Rate (fs): '));
+        # print(f"Current N is {self.N}.")
+        # self.N = int(input('Specify Number of Samples (N): '));
+        
+        # self.dt = 1.0/self.fs;
+        # self.sample_time = self.N*self.dt
 
-        write_string = f"S0,N{self.N},%".encode('utf-8')
-        self.ser.write(write_string)
+        # write_string = f"S0,N{self.N},%".encode('utf-8')
+        # self.ser.write(write_string)
     
-        write_string = f"S1,T{self.fs},%".encode('utf-8')
-        self.ser.write(write_string)
+        # write_string = f"S1,T{self.fs},%".encode('utf-8')
+        # self.ser.write(write_string)
         
-        print ('Settings saved.')
+        # print ('Settings saved.')
+        
+    def list_ports(self):
+        self.com_ports = [
+            p.device
+            for p in serial.tools.list_ports.comports()
+            if 'Arduino' or 'tty' in p.description  
+        ]
+        if not self.com_ports:
+            raise IOError("No COM ports found. Replug in USB cable and try again.")
+        self.com_ports.sort(key=lambda s: (s[:-2], int(s[-2:])) if s[-2] in '0123456789' else (s[:-1], int(s[-1:])))
 
 def main():
     app = QApplication(sys.argv)

@@ -23,7 +23,7 @@ const unsigned long blink_duration = 500000; //500k us = 0.1sec
 void setup() {
   //Setup adc settings
   adc->adc0->setAveraging(4); // set number of averages
-  adc->adc0->setResolution(12); // set bits of resolution
+  adc->adc0->setResolution(16); // set bits of resolution
   adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED); // ,  change the conversion speed
   adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED); // change the sampling speed
   

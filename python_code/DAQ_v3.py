@@ -10,7 +10,7 @@ from time import sleep
 import os
 from openpyxl import Workbook
 import datetime
-import soundfile as sf
+# import soundfile as sf
 
 #COMMENT
 

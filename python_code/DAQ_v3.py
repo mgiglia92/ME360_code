@@ -51,6 +51,8 @@ class Window(QMainWindow):
         self.sample_time = self.N*self.dt
         self.data = []
         
+        self.delay = 0
+        
         self.setStyleSheet(qdarkstyle.load_stylesheet())
         self.getLogo()
         self.getFonts()
@@ -82,7 +84,7 @@ class Window(QMainWindow):
         self.result_file = Workbook()
         self.dl = self.result_file.worksheets[0]
         self.writerow(self.dl,['Data Logged From Teensy '+ self.now.strftime("%Y-%m-%d %H-%M")])
-        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A2'])
+        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A3','Temperature (oC)'])
         
     def getLogo(self):
         script_dir = os.path.dirname(__file__)
@@ -148,6 +150,9 @@ class Window(QMainWindow):
             write_string = f"S1,T{self.fs},%".encode('utf-8')
             self.ser.write(write_string)
             
+            write_string = f"S2,T{self.delay},%".encode('utf-8')
+            self.ser.write(write_string)
+            
     def closeSerial(self):
         if self.ser.is_open:
             self.ser.close()
@@ -156,7 +161,7 @@ class Window(QMainWindow):
     def recordbuttonPushed(self):
         print('Recording...',end='',flush=True)
         self.ser.write(b'R1,%')
-        sleep(self.sample_time)
+        sleep(self.sample_time+self.delay)
         print('Done.')
         
     def sendbuttonPushed(self):
@@ -194,6 +199,12 @@ class Window(QMainWindow):
             buff.append([float(j[1:]) for j in new_data])
         # print(col_name)
         self.data = pd.DataFrame(buff, columns=col_name)
+        
+        # Conversion to temperature: R_therm = 10k*exp(K*(1/T-1/T0)
+        # and ADC = R/(R+10k)*(2^12-1)
+        T0 = 25+273.15 # K
+        K = 3950 # K
+        self.data['Temp'] = 1.0/(1.0/T0+np.log(self.data['C']/((2**12-1)-self.data['C']))/K)-273.15 # oC
         
     # def initialGraphSettings(self):
         # self.ui.graphWidgetOutput.showGrid(x=True, y=True, alpha=None)
@@ -260,6 +271,15 @@ class Window(QMainWindow):
         N_layout.addWidget(N_widget)
         layout.addLayout(N_layout)
         
+        delay_layout = QHBoxLayout()
+        delay_label = QLabel()
+        delay_label.setText("Record Delay (s)")
+        delay_widget = QLineEdit(self.settingsDialog)
+        delay_widget.setText(str(self.delay))
+        delay_layout.addWidget(delay_label)
+        delay_layout.addWidget(delay_widget)
+        layout.addLayout(delay_layout)
+        
         buttonBox = QDialogButtonBox(QDialogButtonBox.Save
                              | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.settingsDialog.accept)
@@ -272,12 +292,17 @@ class Window(QMainWindow):
             self.fs = int(fs_widget.text())
             self.N = int(N_widget.text())
             self.dt = 1.0/self.fs
-            self.sample_time = self.N*self.dt          
+            self.sample_time = self.N*self.dt
+
+            self.delay = int(delay_widget.text())
             
             write_string = f"S0,N{self.N},%".encode('utf-8')
             self.ser.write(write_string)
         
             write_string = f"S1,T{self.fs},%".encode('utf-8')
+            self.ser.write(write_string)
+            
+            write_string = f"S2,T{self.delay},%".encode('utf-8')
             self.ser.write(write_string)
             print('Settings saved.')
         else:

@@ -10,6 +10,7 @@ int daq_in_index=0;
 
 //Timing variables
 unsigned long current=0;
+unsigned long prev_led=0;
 unsigned long prev=0;
 unsigned long delta;
 unsigned long delay_start_time=0; // Time when delay needs to be started (us)
@@ -18,21 +19,33 @@ bool delay_started=false; // Have we started the delay timer flag
 
 //LED indication variables
 const int led_pin = 13;
-const unsigned long blink_duration = 500000; //500k us = 0.1sec
+
+const unsigned long blink_duration = 50000; // 0.1sec
+int ledState = LOW;
 
 void setup() {
   //Setup adc settings
   adc->adc0->setAveraging(4); // set number of averages
-  adc->adc0->setResolution(16); // set bits of resolution
+  adc->adc0->setResolution(12); // set bits of resolution
   adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED); // ,  change the conversion speed
   adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED); // change the sampling speed
   
   //Set led_pin to output
   pinMode(led_pin, OUTPUT);
-  digitalWrite(led_pin, HIGH);
-
+    
   //Begin serial communication
-  Serial.begin(115200); 
+  Serial.begin(115200);
+
+  for (int ii = 0; ii < 5; ii++){
+    if (ledState == LOW){
+      ledState = HIGH;
+    }
+    else if (ledState == HIGH){
+      ledState = LOW;
+    }
+    digitalWrite(led_pin, ledState);
+    delay(250);
+  }
 }
 
 void loop() {
@@ -91,9 +104,21 @@ bool check_delay()
   {
     //If delay not started, start delay, set delay start time
     if(!delay_started){delay_start_time = current; delay_started=true;}
-    
-    //Make led solid on
-    digitalWrite(led_pin, HIGH);
+    else {
+      if ((current-delay_start_time) < ser.record_delay*1000000){
+        if((current-prev_led)>=blink_duration){
+          prev_led = current;
+          if (ledState == LOW){
+            ledState = HIGH;
+          }
+          else if (ledState == HIGH){
+            ledState = LOW;
+          }
+        }
+      }
+      else { ledState = HIGH; }
+    }
+    digitalWrite(led_pin,ledState);
 
     //Compare current time to delay time, if >= desired, return true, else reutrn false
     if((current - delay_start_time) >= ser.record_delay*1000000){return true;}
@@ -102,8 +127,8 @@ bool check_delay()
   else{
     //If not make led blink
     //Check modulo of current and blink duration, if less than 100k turn off led, else on
-    if((current%blink_duration) < 100000){digitalWrite(led_pin,LOW);}
-    else { digitalWrite(led_pin, HIGH); }
+    ledState = LOW;
+    digitalWrite(led_pin, ledState);
 
     //Reset delay_started
     delay_started=false;

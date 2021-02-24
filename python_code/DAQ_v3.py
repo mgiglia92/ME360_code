@@ -80,13 +80,6 @@ class Window(QMainWindow):
         
         atexit.register(self.closeSerial)
         
-        self.now = datetime.datetime.now()
-        self.nrow = 1
-        self.result_file = Workbook()
-        self.dl = self.result_file.worksheets[0]
-        self.writerow(self.dl,['Data Logged From Teensy '+ self.now.strftime("%Y-%m-%d %H-%M")])
-        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A3','Temperature (oC)'])
-        
     def getLogo(self):
         script_dir = os.path.dirname(__file__)
         logo_rel_path = r"logo\CUAtHomeLogo-Horz.png"
@@ -285,6 +278,12 @@ class Window(QMainWindow):
     def savebuttonPushed(self):
         print('Saving...',end='',flush=True)
         self.now = datetime.datetime.now()
+        self.nrow = 1
+        self.result_file = Workbook()
+        self.dl = self.result_file.worksheets[0]
+        self.writerow(self.dl,['Data Logged From Teensy '+ self.now.strftime("%Y-%m-%d %H-%M")])
+        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A3','Temperature (oC)'])
+        
         for row in self.data.to_numpy():
             self.writerow(self.dl,row)
         self.result_file.save(directory+'\\data\\Experiment Data '+ self.now.strftime("%Y-%m-%d %H-%M") +'.xlsx') 

@@ -13,15 +13,16 @@ volatile double enc_count;  //Encoder "ticks" counted, Enc ++ = CW, Enc -- = CCW
 double enc_deg; // Encoder position in degrees
 double angular_velocity; //Angular velocity of the motor
 double prev_deg =0; //Previous encoder position for angular velocity calculation
-double sigma = 0.01; //Cutoff freq for band-limited derivative
+double sigma = 0.1; //time constant for band limited derivative
+double sample_period = 0.005; //between samples (in ms)
 
-double sample_period = 0.005;
+int print_delay = 100; //Time between serial prints to make serial monitor more readable
 
 Differentiator diff(sigma, sample_period);
 
 //***********************************************************************************
 void setup() {
-  Serial.begin(500000);  // Begins Serial communication
+  Serial.begin(115200);  // Begins Serial communication
 
   //Encoder Setup
   pinMode(ENC_A, INPUT_PULLUP);
@@ -39,7 +40,10 @@ void setup() {
 //***********************************************************************************
 void loop() {
    compute_motor_voltage(); // Update controller input, compute motor voltage and write to motor
-   Serial.println(angular_velocity);
+   if(millis() % print_delay == 0)
+   {
+    Serial.println(angular_velocity);
+   }
 }
 
 //*****************************************************//

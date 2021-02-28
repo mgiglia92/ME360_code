@@ -62,12 +62,10 @@ void loop() {
     if (motorState == LOW){
       motorState = HIGH;
       digitalWrite(PWM_B, motorState);
-      Serial.println("CHANGED");
     }
     else if (motorState == HIGH){
       motorState = LOW;
       digitalWrite(PWM_B, motorState);
-      Serial.println("CHANGED");
     }
    }
    else if (b == 0 && ballowed == 0){

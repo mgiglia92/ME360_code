@@ -26,6 +26,9 @@ double sigma = 0.1; //time constant for band limited derivative
 double sample_period = 0.005; //between samples (in ms)
 Differentiator diff(sigma, sample_period);
 
+int motorState = LOW;
+int ballowed = 1;
+
 //***********************************************************************************
 void setup() {
   Serial.begin(115200);  // Begins Serial communication
@@ -39,17 +42,37 @@ void setup() {
   //Motor Setup
   pinMode(PWM_B, OUTPUT);
   pinMode(DIR_B, OUTPUT);
-  digitalWrite(PWM_B, HIGH); // Stop Motor on Start Up
+  digitalWrite(PWM_B, motorState); // Stop Motor on Start Up
 
   //Initialize variables
   current_micros = micros();
   prev_micros = current_micros;
   prev_deg = 0;
 
+  pinMode(13, INPUT);
+
 }
 
 //***********************************************************************************
 void loop() {
+   int b = digitalRead(13);
+
+   if (b == 1 && ballowed == 1){
+    ballowed = 0;
+    if (motorState == LOW){
+      motorState = HIGH;
+      digitalWrite(PWM_B, motorState);
+      Serial.println("CHANGED");
+    }
+    else if (motorState == HIGH){
+      motorState = LOW;
+      digitalWrite(PWM_B, motorState);
+      Serial.println("CHANGED");
+    }
+   }
+   else if (b == 0 && ballowed == 0){
+    ballowed = 1;
+   }
    compute_motor_voltage(); // Update controller input, compute motor voltage and write to motor
    if(millis() % print_delay == 0)
    {

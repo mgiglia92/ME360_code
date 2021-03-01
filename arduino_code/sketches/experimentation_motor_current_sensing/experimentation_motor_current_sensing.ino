@@ -27,7 +27,7 @@ double sample_period = 0.005; //between samples (in ms)
 Differentiator diff(sigma, sample_period);
 
 int motorState = LOW;
-int ballowed = 1;
+int ballowed = 0;
 
 //***********************************************************************************
 void setup() {
@@ -55,17 +55,20 @@ void setup() {
 
 //***********************************************************************************
 void loop() {
-   int b = digitalRead(13);
-
+   int b = digitalRead(10);
+   
    if (b == 1 && ballowed == 1){
     ballowed = 0;
+    //Serial.println("here");
     if (motorState == LOW){
       motorState = HIGH;
       digitalWrite(PWM_B, motorState);
+      //Serial.println("ON");
     }
     else if (motorState == HIGH){
       motorState = LOW;
       digitalWrite(PWM_B, motorState);
+      //Serial.println("OFF");
     }
    }
    else if (b == 0 && ballowed == 0){
@@ -74,6 +77,7 @@ void loop() {
    compute_motor_voltage(); // Update controller input, compute motor voltage and write to motor
    if(millis() % print_delay == 0)
    {
+    //Serial.print(b);Serial.print(",");
     Serial.print("ang_vel: "); Serial.print(angular_velocity);
     Serial.print(" | current: "); Serial.println(motor_current, 7);
    }

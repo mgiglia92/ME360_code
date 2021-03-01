@@ -75,7 +75,7 @@ void loop() {
     ballowed = 1;
    }
    compute_motor_voltage(); // Update controller input, compute motor voltage and write to motor
-   if(millis() % print_delay == 0)
+   if(millis() % print_delay == 0 && motorState == HIGH)
    {
     //Serial.print(b);Serial.print(",");
     Serial.print("ang_vel: "); Serial.print(angular_velocity);

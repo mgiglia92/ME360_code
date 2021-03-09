@@ -62,8 +62,9 @@ void loop() {
     prev = current;
     straingage = adc->adc0->analogRead(A0);
     accel = IMU.get_accel('z');
-    //Serial.print(100);Serial.print(',');
-    //Serial.print(4000);Serial.print(',');
-    Serial.println(accel,10);
+    Serial.print(100);Serial.print(',');
+    Serial.print(4000);Serial.print(',');
+    //Serial.println(accel,10);
+    Serial.println(straingage);
   }
 }

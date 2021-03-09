@@ -193,12 +193,14 @@ class Window(QMainWindow):
             buff.append([float(j[1:]) for j in new_data])
         # print(col_name)
         self.data = pd.DataFrame(buff, columns=col_name)
+        self.data = self.data.drop(columns=['C'])
+        self.data['B'] = self.data['B']/1000000
         
-        # Conversion to temperature: R_therm = 10k*exp(K*(1/T-1/T0)
-        # and ADC = R/(R+10k)*(2^12-1)
-        T0 = 25+273.15 # K
-        K = 3950 # K
-        self.data['Temp'] = 1.0/(1.0/T0+np.log(self.data['C']/((2**12-1)-self.data['C']))/K)-273.15 # oC
+        # # Conversion to temperature: R_therm = 10k*exp(K*(1/T-1/T0)
+        # # and ADC = R/(R+10k)*(2^12-1)
+        # T0 = 25+273.15 # K
+        # K = 3950 # K
+        # self.data['Temp'] = 1.0/(1.0/T0+np.log(self.data['C']/((2**12-1)-self.data['C']))/K)-273.15 # oC
         
     # def initialGraphSettings(self):
         # self.ui.graphWidgetOutput.showGrid(x=True, y=True, alpha=None)
@@ -213,49 +215,11 @@ class Window(QMainWindow):
         # self.legendInput.clear()
         
         self.time = self.data['T'].to_numpy()
-        self.A = self.data['A'].to_numpy()*3.3/(2^12-1)
-        self.B = self.data['B'].to_numpy()/(1000000)
+        self.A = self.data['A'].to_numpy()/(2^12-1)
+        self.B = self.data['B'].to_numpy()
         
         self.A = self.A-self.A.mean()
         self.B = self.B-self.B.mean()
-        
-        self.sliderDialog = QDialog()
-        self.sliderDialog.setStyleSheet(qdarkstyle.load_stylesheet())
-        self.sliderDialog.setWindowTitle("Sample Slider")
-        
-        self.slider_layout = QVBoxLayout(self.sliderDialog)
-        
-        self.plot_button = QPushButton()
-        self.plot_button.setText("Plot")
-        self.plot_button.clicked.connect(self.plot_it)
-        self.slider_layout.addWidget(self.plot_button)
-        
-        self.sliderDialog.setLayout(self.slider_layout)
-        self.sliderDialog.resize(900,75)
-        self.sliderDialog.exec_()
-        
-    def plot_it(self):
-        # self.time = np.array([0,1,2,3,4,5,6,7,8,9])
-        # self.A = np.array([0,0,0,1,0,0,0,0,0,0])
-        # self.B = np.array([0,0,0,0,0,0,0,1,0,0])
-        
-        self.slider_layout.removeWidget(self.plot_button)
-        self.plot_button.deleteLater()
-        self.plot_button.setParent(None)
-        
-        self.slider_pos = 0
-        self.slider_label = QLabel(str(self.slider_pos))
-        self.slider_label.setAlignment(Qt.AlignCenter)
-        self.slider_layout.addWidget(self.slider_label)
-        
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMinimum(-500)
-        self.slider.setMaximum(500)
-        self.slider.setValue = self.slider_pos
-        self.slider.setSingleStep(1)
-        self.slider_layout.addWidget(self.slider)
-        self.slider.valueChanged.connect(self.sliderValueChanged)
-        self.slider.sliderReleased.connect(self.sliderChanged)
         
         self.fig = plt.figure()
         ax = self.fig.add_subplot(111)
@@ -264,16 +228,6 @@ class Window(QMainWindow):
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
         plt.show()
-        
-    def sliderValueChanged(self):
-        self.slider_pos = self.slider.value()
-        self.slider_label.setText(str(self.slider_pos))
-        
-    def sliderChanged(self):
-        self.B2 = np.roll(self.B,self.slider_pos)
-        self.update_line.set_ydata(self.B2)
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
     
     def savebuttonPushed(self):
         print('Saving...',end='',flush=True)
@@ -282,7 +236,7 @@ class Window(QMainWindow):
         self.result_file = Workbook()
         self.dl = self.result_file.worksheets[0]
         self.writerow(self.dl,['Data Logged From Teensy '+ self.now.strftime("%Y-%m-%d %H-%M")])
-        self.writerow(self.dl,['Time (s)','A0', 'A1', 'A3','Temperature (oC)'])
+        self.writerow(self.dl,['Time (s)','Strain Gage', 'Accelerometer'])
         
         for row in self.data.to_numpy():
             self.writerow(self.dl,row)

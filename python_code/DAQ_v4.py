@@ -219,7 +219,7 @@ class Window(QMainWindow):
         self.B = self.data['B'].to_numpy()
         
         self.A = self.A-self.A.mean()
-        # self.B = self.B-self.B.mean()
+        self.B = self.B-self.B.mean()
         
         self.fig = plt.figure()
         ax = self.fig.add_subplot(111)

@@ -46,13 +46,13 @@ class Window(QMainWindow):
         self.currentItemsSB = [] # Used to store variables to be displayed in status bar at the bottom right
         self.verbose = True # Initialization. Used in the thread generated in application
 
-        self.fs = 10000;
-        self.N = 10000;
+        self.fs = 1000;
+        self.N = 5000;
         self.dt = 1.0/self.fs
         self.sample_time = self.N*self.dt
         self.data = []
         
-        self.delay = 0
+        self.delay = 2
         
         self.setStyleSheet(qdarkstyle.load_stylesheet())
         self.getLogo()
@@ -194,7 +194,7 @@ class Window(QMainWindow):
         # print(col_name)
         self.data = pd.DataFrame(buff, columns=col_name)
         self.data = self.data.drop(columns=['C'])
-        self.data['B'] = self.data['B']/1000000
+        self.data['B'] = self.data['B']/10000
         
         # # Conversion to temperature: R_therm = 10k*exp(K*(1/T-1/T0)
         # # and ADC = R/(R+10k)*(2^12-1)
@@ -219,7 +219,7 @@ class Window(QMainWindow):
         self.B = self.data['B'].to_numpy()
         
         self.A = self.A-self.A.mean()
-        self.B = self.B-self.B.mean()
+        # self.B = self.B-self.B.mean()
         
         self.fig = plt.figure()
         ax = self.fig.add_subplot(111)

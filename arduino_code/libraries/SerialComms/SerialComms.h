@@ -31,7 +31,7 @@ public:
     bool delay_complete;
     
     unsigned int *mic1;
-    unsigned int *mic2;
+    int16_t *mic2;
     unsigned int temp;
     int arr_length;//maximum length of array
     int start_reading; //flag to start recording data

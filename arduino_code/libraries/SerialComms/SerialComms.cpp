@@ -11,7 +11,7 @@ SerialComms::SerialComms(){
     arr_length=50000; //Maximum length of the mic data array
     daq_out_index=0;    //Index showing the last position of data that has been sent
     mic1 = new unsigned int[arr_length];
-    mic2 = new unsigned int[arr_length];
+    mic2 = new int16_t[arr_length];
     start_reading=0;//initialize to not start reading
     record_delay=0; //initialize record delay to 0 seconds
     write_data=0;

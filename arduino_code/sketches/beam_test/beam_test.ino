@@ -79,7 +79,7 @@ void DAQ_in()
     IMU.update();
     //Read analog ports
     ser.mic1[daq_in_index] = adc->adc0->analogRead(A0);
-    ser.mic2[daq_in_index] = (int)(IMU.get_accel('z')*1000000);
+    ser.mic2[daq_in_index] = (IMU.get_accel('z')*10000);
     //ser.temp = adc->adc0->analogRead(A3);
     //print debug
 //    Serial.println(ser.mic1[daq_in_index]);

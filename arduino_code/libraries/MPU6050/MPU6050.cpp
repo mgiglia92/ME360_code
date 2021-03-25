@@ -37,7 +37,7 @@ bool MPU6050::initialize()
     //configure accel
     Wire.beginTransmission(0x68);
     Wire.write(0x1C);  //Address we want to edit
-    Wire.write(0b00000000); //Write accel sensitivity to +-2g
+    Wire.write(0b00011000); //Write accel sensitivity to +-4g
     Wire.endTransmission();
     delay(100);
     return true;
@@ -53,14 +53,14 @@ bool MPU6050::update()
     // delay(10);
     Wire.requestFrom(0x68,14,true);
     // Serial.print("bytes aval: "); Serial.println(Wire.available());
-    //Data for each axis is stored in two 8 bit registers, bitshift first read by 8 and bitwire OR the next read
-    _ax = Wire.read()<<8|Wire.read();
-    _ay = Wire.read()<<8|Wire.read();
-    _az = Wire.read()<<8|Wire.read();
-    _temp = Wire.read()<<8|Wire.read();
-    _wx = Wire.read()<<8|Wire.read();
-    _wy = Wire.read()<<8|Wire.read();
-    _wz = Wire.read()<<8|Wire.read();
+    //Data for each axis is stored in two 8 bit registers, bitshift first read by 8 and bitwise OR the next read
+    _ax = (Wire.read()<<8)|Wire.read();
+    _ay = (Wire.read()<<8)|Wire.read();
+    _az = (Wire.read()<<8)|Wire.read();
+    _temp = (Wire.read()<<8)|Wire.read();
+    _wx = (Wire.read()<<8)|Wire.read();
+    _wy = (Wire.read()<<8)|Wire.read();
+    _wz = (Wire.read()<<8)|Wire.read();
     return true;
 }
 

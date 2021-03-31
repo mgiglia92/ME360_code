@@ -23,6 +23,7 @@ bool MPU6050::initialize()
 {
     //Power management register
     Wire.begin();
+    Wire.setClock(400000);
     Wire.beginTransmission(0x68);
     Wire.write(0x6B);
     Wire.write(0x00);

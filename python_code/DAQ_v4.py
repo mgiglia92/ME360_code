@@ -301,6 +301,9 @@ class Window(QMainWindow):
             self.N = int(N_widget.text())
             self.dt = 1.0/self.fs
             self.sample_time = self.N*self.dt
+            
+            if self.fs > 1000:
+                print('WARNING: sample rate for the Accelerometer must not exceed 1000 Hz.')
 
             self.delay = int(delay_widget.text())
             

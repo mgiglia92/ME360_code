@@ -47,7 +47,7 @@ class Window(QMainWindow):
         self.verbose = True # Initialization. Used in the thread generated in application
 
         self.fs = 10;
-        self.N = 600;
+        self.N = 50;
         self.dt = 1.0/self.fs
         self.sample_time = self.N*self.dt
         self.data = []
